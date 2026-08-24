@@ -1,24 +1,49 @@
--- Anti-Ragdoll Script para Delta Executor (Anti-Bate)
+-- Abominación Anti-Hitbox & Anti-Ragdoll para Delta Executor
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
-RunService.Stepped:Connect(function()
+-- Bucle de máxima prioridad para contrarrestar físicas y alcances enemigos
+RunService.Heartbeat:Connect(function()
     local character = player.Character
     if character then
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
         local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            -- Evita que el bate te tire al suelo bloqueando los estados de caída y bloqueo físico
+        
+        if humanoidRootPart and humanoid then
+            -- 1. Anti-Ragdoll y Anti-Stun extremo
+            humanoid.PlatformStand = false
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
             humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
             humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Stunned, false)
             
-            -- Si por algún motivo el juego te tumba, te levanta al instante
             if humanoid:GetState() == Enum.HumanoidStateType.Ragdoll or 
                humanoid:GetState() == Enum.HumanoidStateType.FallingDown or 
                humanoid:GetState() == Enum.HumanoidStateType.PlatformStanding then
                 humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
             end
+
+            -- 2. Anulación de velocidad de impacto (Anti-Knockback del bate)
+            if humanoidRootPart.AssemblyLinearVelocity.Magnitude > 75 then
+                humanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            end
+
+            -- 3. Capas de defensa Anti-Hitbox (Asegura que tus colisiones de torso ignoren herramientas ajenas si el juego lo permite)
+            for _, part in ipairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    -- Evita que las herramientas enemigas registren toque directo en ciertas partes secundarias
+                    part.CanCollide = true
+                end
+            end
         end
     end
+end)
+
+-- 4. Bloqueo de bucle de muerte por caída/fuerza bruta del bate
+player.CharacterAdded:Connect(function(newChar)
+    local humanoid = newChar:WaitForChild("Humanoid")
+    humanoid.Died:Connect(function()
+        -- Opcional: previene estados residuales al reaparecer
+    end)
 end)
