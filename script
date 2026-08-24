@@ -1,0 +1,44 @@
+-- Script creado para Delta Executor
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- CONFIGURACIÓN DE VELOCIDAD (Modifica este número si notas que aún se bugea: ej. 30 o 40)
+local VELOCIDAD_EQUILIBRADA = 36
+
+local function aplicarVelocidad(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    humanoid.WalkSpeed = VELOCIDAD_EQUILIBRADA
+end
+
+-- Aplicar velocidad al morir/respawnear
+player.CharacterAdded:Connect(aplicarVelocidad)
+if player.Character then
+    task.spawn(function()
+        aplicarVelocidad(player.Character)
+    end)
+end
+
+-- INTERACCIÓN RÁPIDA (0.1 segundos en ProximityPrompts)
+local function ajustarPrompt(v)
+    if v:IsA("ProximityPrompt") then
+        v.HoldDuration = 0.1
+    end
+end
+
+for _, v in ipairs(workspace:GetDescendants()) do
+    ajustarPrompt(v)
+end
+
+workspace.DescendantAdded:Connect(ajustarPrompt)
+
+-- SALTOS INFINITOS
+UserInputService.JumpRequest:Connect(function()
+    local character = player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
