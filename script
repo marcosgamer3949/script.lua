@@ -1,17 +1,17 @@
--- Script creado para Delta Executor
+-- Script mejorado para Delta Executor
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- CONFIGURACIÓN DE VELOCIDAD (Modifica este número si notas que aún se bugea: ej. 30 o 40)
-local VELOCIDAD_EQUILIBRADA = 36
+-- 1. VELOCIDAD MÁS RÁPIDA (Subida a 55)
+local VELOCIDAD_RAPIDA = 55
 
 local function aplicarVelocidad(character)
     local humanoid = character:WaitForChild("Humanoid")
-    humanoid.WalkSpeed = VELOCIDAD_EQUILIBRADA
+    humanoid.WalkSpeed = VELOCIDAD_RAPIDA
 end
 
--- Aplicar velocidad al morir/respawnear
 player.CharacterAdded:Connect(aplicarVelocidad)
 if player.Character then
     task.spawn(function()
@@ -19,10 +19,22 @@ if player.Character then
     end)
 end
 
--- INTERACCIÓN RÁPIDA (0.1 segundos en ProximityPrompts)
+-- 2. NADO EN EL AIRE (Para moverte por el aire sin que te mate el anticheat)
+RunService.Stepped:Connect(function()
+    local character = player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+            humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+        end
+    end
+end)
+
+-- 3. PROMPT ARREGLADO (Aplica 0.1s a todos los ProximityPrompts actuales y futuros)
 local function ajustarPrompt(v)
     if v:IsA("ProximityPrompt") then
         v.HoldDuration = 0.1
+        v.MaxActivationDistance = 32 -- Opcional: amplía un poco el rango para alcanzarlo mejor
     end
 end
 
