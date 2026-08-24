@@ -1,56 +1,24 @@
--- Script mejorado para Delta Executor
+-- Anti-Ragdoll Script para Delta Executor (Anti-Bate)
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
--- 1. VELOCIDAD MÁS RÁPIDA (Subida a 55)
-local VELOCIDAD_RAPIDA = 55
-
-local function aplicarVelocidad(character)
-    local humanoid = character:WaitForChild("Humanoid")
-    humanoid.WalkSpeed = VELOCIDAD_RAPIDA
-end
-
-player.CharacterAdded:Connect(aplicarVelocidad)
-if player.Character then
-    task.spawn(function()
-        aplicarVelocidad(player.Character)
-    end)
-end
-
--- 2. NADO EN EL AIRE (Para moverte por el aire sin que te mate el anticheat)
 RunService.Stepped:Connect(function()
     local character = player.Character
     if character then
         local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
-            humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
-        end
-    end
-end)
-
--- 3. PROMPT ARREGLADO (Aplica 0.1s a todos los ProximityPrompts actuales y futuros)
-local function ajustarPrompt(v)
-    if v:IsA("ProximityPrompt") then
-        v.HoldDuration = 0.1
-        v.MaxActivationDistance = 32 -- Opcional: amplía un poco el rango para alcanzarlo mejor
-    end
-end
-
-for _, v in ipairs(workspace:GetDescendants()) do
-    ajustarPrompt(v)
-end
-
-workspace.DescendantAdded:Connect(ajustarPrompt)
-
--- SALTOS INFINITOS
-UserInputService.JumpRequest:Connect(function()
-    local character = player.Character
-    if character then
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
         if humanoid then
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            -- Evita que el bate te tire al suelo bloqueando los estados de caída y bloqueo físico
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, false)
+            
+            -- Si por algún motivo el juego te tumba, te levanta al instante
+            if humanoid:GetState() == Enum.HumanoidStateType.Ragdoll or 
+               humanoid:GetState() == Enum.HumanoidStateType.FallingDown or 
+               humanoid:GetState() == Enum.HumanoidStateType.PlatformStanding then
+                humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            end
         end
     end
 end)
